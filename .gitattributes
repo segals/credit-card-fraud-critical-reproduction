@@ -1,0 +1,7 @@
+# Prevent line-ending conversion from corrupting binary artifacts.
+*.pdf binary
+*.png binary
+*.h5 binary
+*.keras binary
+# Keep notebooks byte-stable (no CRLF rewriting of embedded base64 outputs).
+*.ipynb -text

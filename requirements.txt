@@ -1,0 +1,12 @@
+# Pinned to the versions this project was developed and executed with.
+numpy==2.2.6
+scipy==1.15.3
+pandas==2.3.3
+scikit-learn==1.7.1
+tensorflow==2.20.0
+matplotlib==3.10.6
+seaborn==0.13.2
+# Notebook tooling (needed only to (re)build/execute notebook.ipynb)
+nbformat==5.10.4
+nbconvert==7.17.1
+jupyter-client
