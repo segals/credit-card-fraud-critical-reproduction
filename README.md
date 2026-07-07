@@ -1,6 +1,6 @@
 # Credit Card Fraud Detection: A Critical Reproduction Study
 
-**Course:** Data Science in Cyber, Dr. Uri Itai. **Submission:** Gilad Segal 216214353
+**Course:** Data Science in Cyber, Dr. Uri Itai. **Submission:** Gilad Segal 216214353<br>
 
 This project reproduces and critically evaluates a widely shared autoencoder-based credit-card-fraud
 tutorial. The aim is not to build a detector from scratch, but to check whether the source's claims hold once
