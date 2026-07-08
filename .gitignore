@@ -8,8 +8,9 @@ logs/
 *.keras
 *.h5
 
-# Local-only report generator (kept out of the submitted repo)
+# Local-only generator scripts (kept out of the submitted repo)
 make_report.py
+build_notebook.py
 
 # Python / Jupyter
 __pycache__/

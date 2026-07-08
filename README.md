@@ -36,7 +36,6 @@ The full write-up is in [`report.pdf`](report.pdf), and the executable analysis 
 ```
 notebook.ipynb           complete, executable analysis (Sections 1-8)
 report.pdf               8-section critical report
-build_notebook.py        regenerates notebook.ipynb from source cells
 src/
   load_data.py           reproducible dataset loader (OpenML id 42175, cached to data/)
   reproduce_original.py  faithful TF2 port of the source, flaws preserved (writes artifacts/)
