@@ -24,7 +24,7 @@ def code(text: str) -> None:
 md(r"""
 # Credit Card Fraud Detection: A Critical Reproduction Study
 
-**Course:** Data Science in Cyber, Dr. Uri Itai. **Type:** Individual final project.
+**Course:** Data Science in Cyber, Dr. Uri Itai. **Submitter:** Gilad Segal 216214353.
 
 ## Aim
 This notebook reproduces and critically evaluates a published tutorial. The goal is not to build a new
@@ -95,11 +95,29 @@ print("Exact duplicate rows:", int(df.duplicated().sum()))
 """)
 
 code(r"""
-# Index / column sanity check: columns are Time, 28 anonymised PCA components, Amount, Class.
-# There is no meaningful row index (default RangeIndex) — correct for transaction records.
+# Column and index check. The columns are Time, 28 anonymised PCA components (V1..V28), Amount and Class.
+# The index is a default RangeIndex with no meaningful key, which is appropriate for transaction records.
 print("Columns:", list(df.columns))
+print("Index:", df.index.name, "| is RangeIndex:", isinstance(df.index, pd.RangeIndex))
 print("Fraud count:", int(df.Class.sum()), "| prevalence: {:.4%}".format(df.Class.mean()))
 df[["Time", "Amount"]].describe()
+""")
+
+code(r"""
+# Data-quality checks: constant (single-value) columns, duplicate columns, and duplicate rows.
+constant_cols = [c for c in df.columns if df[c].nunique() == 1]
+dup_cols = [c for c in df.columns if any(df[c].equals(df[o]) for o in df.columns[:list(df.columns).index(c)])]
+n_dup_rows = int(df.duplicated().sum())
+print("Constant (single-value) columns:", constant_cols or "none")
+print("Duplicate columns:", dup_cols or "none")
+print(f"Exact duplicate rows: {n_dup_rows} ({n_dup_rows / len(df):.2%} of the data)")
+""")
+
+md(r"""
+There are no constant columns and no duplicate columns, so no feature is dropped on those grounds. There is
+a small number of exact duplicate rows. The source keeps them, so the faithful reproduction in Section 3
+keeps them as well, but we remove them before the corrected split in Section 4 to prevent identical
+transactions from appearing in both the training and test sets.
 """)
 
 md(r"""
@@ -296,15 +314,24 @@ For the fair rerun we correct the preprocessing:
 - `Amount` is heavy-tailed with extreme outliers, so we scale it with a `RobustScaler` (median and IQR)
   fitted on the training split only. The skew before and after is shown below.
 - We keep the engineered `Hour` feature, scaled, for the supervised models.
-- The `V*` PCA components are already on a comparable scale and mutually uncorrelated (Section 2.5), so no
-  further dimensionality reduction is needed; they are already the reduced representation.
+- **Encoding:** all predictors are numeric (the PCA components, the amount, and the derived hour), so there
+  are no categorical variables to encode.
+- **Feature selection and dimensionality reduction:** the `V*` PCA components are already on a comparable
+  scale and mutually uncorrelated (Section 2.5), so we keep all of them. There is no redundancy to prune and
+  no need for a further reduction such as PCA, since the data is already a reduced representation. The tree
+  models additionally perform implicit feature selection through their split choices.
+- We remove the exact duplicate rows found in Section 1 before splitting, so that identical transactions do
+  not leak across the training and test sets.
 """)
 
 code(r"""
 from sklearn.preprocessing import RobustScaler
 
 feature_cols = [f"V{i}" for i in range(1, 29)] + ["Amount", "Hour"]
-X = df[feature_cols].copy(); y = df["Class"].values
+# Remove exact duplicate rows before splitting so the same transaction cannot fall in both train and test.
+model_df = df.drop_duplicates().reset_index(drop=True)
+print("Dropped {} duplicate rows; {} remain.".format(len(df) - len(model_df), len(model_df)))
+X = model_df[feature_cols].copy(); y = model_df["Class"].values
 
 X_tmp, X_test, y_tmp, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=RANDOM_SEED)
 X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.25, stratify=y_tmp,
@@ -461,12 +488,14 @@ code(r"""
 # Characterise the Random Forest's errors on the test set at its chosen threshold.
 thr_rf, _ = best_threshold_by_fbeta(y_val, rf.predict_proba(X_val.values)[:, 1], beta=BETA)
 rf_pred = (rf_scores > thr_rf).astype(int)
-err_df = X_test.copy(); err_df["true"] = y_test; err_df["pred"] = rf_pred; err_df["Amount_raw"] = df.loc[X_test.index, "Amount"]
+# X_test indexes into model_df (after de-duplication), so raw amounts are looked up there.
+err_df = X_test.copy(); err_df["true"] = y_test; err_df["pred"] = rf_pred
+err_df["Amount_raw"] = model_df.loc[X_test.index, "Amount"]
 false_neg = err_df[(err_df.true == 1) & (err_df.pred == 0)]
 false_pos = err_df[(err_df.true == 0) & (err_df.pred == 1)]
 print(f"False negatives (missed fraud): {len(false_neg)}   |   False positives (blocked legit): {len(false_pos)}")
-print("Median amount — missed fraud: ${:.2f}  vs  all fraud: ${:.2f}".format(
-      false_neg.Amount_raw.median(), df.loc[df.Class == 1, "Amount"].median()))
+print("Median amount of missed fraud: ${:.2f}  vs  all fraud: ${:.2f}".format(
+      false_neg.Amount_raw.median(), model_df.loc[model_df.Class == 1, "Amount"].median()))
 false_neg[["Amount_raw", "V14", "V4", "V12", "V10"]].describe().round(2)
 """)
 

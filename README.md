@@ -1,6 +1,6 @@
 # Credit Card Fraud Detection: A Critical Reproduction Study
 
-**Course:** Data Science in Cyber, Dr. Uri Itai. **Submission:** Individual final project.
+**Course:** Data Science in Cyber, Dr. Uri Itai. **Submitter:** Gilad Segal 216214353.
 
 This project reproduces and critically evaluates a widely shared autoencoder-based credit-card-fraud
 tutorial. The aim is not to build a detector from scratch, but to check whether the source's claims hold once
@@ -37,7 +37,6 @@ The full write-up is in [`report.pdf`](report.pdf), and the executable analysis 
 notebook.ipynb           complete, executable analysis (Sections 1-8)
 report.pdf               8-section critical report
 build_notebook.py        regenerates notebook.ipynb from source cells
-make_report.py           regenerates report.pdf from the notebook's results
 src/
   load_data.py           reproducible dataset loader (OpenML id 42175, cached to data/)
   reproduce_original.py  faithful TF2 port of the source, flaws preserved (writes artifacts/)
@@ -56,9 +55,6 @@ python src/reproduce_original.py            # about 15 min on CPU (100 epochs); 
 # 3. Execute the notebook end to end
 python -m nbconvert --to notebook --execute notebook.ipynb --output notebook.ipynb \
        --ExecutePreprocessor.timeout=3600
-
-# 4. (Optional) regenerate the PDF report from the notebook's saved results
-python make_report.py
 ```
 The dataset downloads automatically from OpenML on the first run and is cached under `data/`.
 
